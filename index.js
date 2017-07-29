@@ -11,15 +11,15 @@ const proxy = () => {
 }
 
 class IDBLucass {
-  constructor (name, algo = 'sha256', _createHasher = createHasher) {
+  constructor (name, _createHasher = cb => createHasher('sha256', cb)) {
     if (!name) throw new Error('Missing required argument: name.')
     this.kv = new KeyValueStore(name)
-    this._algo = algo
     this._createHasher = _createHasher
   }
-  hash (value, cb) {
+  hash (value, ...args) {
+    let cb = args.pop()
     if (Buffer.isBuffer(value)) {
-      let hasher = this._createHasher(this._algo, cb)
+      let hasher = this._createHasher(...args, cb)
       hasher.write(value)
       hasher.end()
     } else if (value && value.readable) {
@@ -31,9 +31,10 @@ class IDBLucass {
       return cb(new Error('Invalid type.'))
     }
   }
-  set (value, cb) {
+  set (value, ...args) {
+    let cb = args.pop()
     if (Buffer.isBuffer(value)) {
-      this.hash(value, (err, hash) => {
+      this.hash(value, ...args, (err, hash) => {
         if (err) return cb(err)
         this.kv.set(hash, value, err => cb(err, hash))
       })

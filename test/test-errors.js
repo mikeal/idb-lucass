@@ -11,14 +11,14 @@ const proxy = () => {
   })
 }
 
-const failHasher = (algo, cb) => {
+const failHasher = cb => {
   process.nextTick(() => cb(new Error('Test Error')))
   return through(() => {})
 }
 
 test('errors: (implementation) hash error in hash()', t => {
   t.plan(1)
-  let store = idblucass('test', 'sha256', failHasher)
+  let store = idblucass('test', failHasher)
   store.hash(Buffer.from('asdf'), err => {
     t.type(err, 'Error')
   })
@@ -26,7 +26,7 @@ test('errors: (implementation) hash error in hash()', t => {
 
 test('errors: (implementation) hash error in set()', t => {
   t.plan(1)
-  let store = idblucass('test', 'sha256', failHasher)
+  let store = idblucass('test', failHasher)
   store.set(Buffer.from('asdf'), err => {
     t.type(err, 'Error')
   })
