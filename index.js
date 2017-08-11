@@ -1,71 +1,35 @@
-const KeyValueStore = require('idb-kv-store')
-const createHasher = require('hashes-stream')
-const bl = require('bl')
-const through = require('through2')
-
-const proxy = () => {
-  return through(function (chunk, enc, cb) {
-    this.push(chunk)
-    cb()
-  })
-}
+const idb = require('idb')
+const multihasher = require('multihasher')
 
 class IDBLucass {
-  constructor (name, _createHasher = cb => createHasher('sha256', cb)) {
+  constructor (name, hasher = multihasher('sha256')) {
     if (!name) throw new Error('Missing required argument: name.')
-    this.kv = new KeyValueStore(name)
-    this._createHasher = _createHasher
-  }
-  hash (value, ...args) {
-    let cb = args.pop()
-    if (Buffer.isBuffer(value)) {
-      let hasher = this._createHasher(...args, cb)
-      hasher.write(value)
-      hasher.end()
-    } else if (value && value.readable) {
-      value.pipe(bl((err, buff) => {
-        if (err) return cb(err)
-        return this.hash(buff, cb)
-      }))
-    } else {
-      return cb(new Error('Invalid type.'))
-    }
-  }
-  set (value, ...args) {
-    let cb = args.pop()
-    if (Buffer.isBuffer(value)) {
-      this.hash(value, ...args, (err, hash) => {
-        if (err) return cb(err)
-        this.kv.set(hash, value, err => cb(err, hash))
-      })
-    } else if (value && value.readable) {
-      value.pipe(bl((err, buff) => {
-        if (err) return cb(err)
-        return this.set(buff, cb)
-      }))
-    } else {
-      return cb(new Error('Invalid type.'))
-    }
-  }
-  getBuffer (hash, cb) {
-    this.kv.get(hash, (err, buff) => {
-      if (!err && typeof buff === 'undefined') {
-        err = new Error('Not found')
-      }
-      cb(err, buff)
+    this.dbPromise = idb.open(name, 1, upgrade => {
+      return upgrade.createObjectStore('keyval')
     })
+    this._hasher = hasher
   }
-  getStream (hash) {
-    let stream = proxy()
-    this.kv.get(hash, (err, buff) => {
-      if (err) return stream.emit('error', err)
-      if (typeof buff === 'undefined') {
-        return stream.emit('error', new Error('Not found.'))
-      }
-      stream.write(buff)
-      stream.end()
-    })
-    return stream
+  async hash (value, ...args) {
+    if (!Buffer.isBuffer(value)) throw new Error('Invalid type.')
+    return this._hasher(value, ...args)
+  }
+  async get (hash) {
+    let db = await this.dbPromise
+    return db.transaction('keyval').objectStore('keyval').get(hash)
+  }
+  async set (value, ...args) {
+    if (!Buffer.isBuffer(value)) throw new Error('Invalid type.')
+    let hash = await this.hash(value, ...args)
+    let db = await this.dbPromise
+    let tx = db.transaction('keyval', 'readwrite')
+    await tx.objectStore('keyval').put(value, hash).complete
+    return hash
+  }
+  async missing (hashes) {
+    let db = await this.dbPromise
+    let tx = db.transaction('keyval', 'readwrite')
+    let keys = new Set(await tx.objectStore('keyval').getAllKeys())
+    return hashes.filter(hash => !keys.has(hash))
   }
 }
 

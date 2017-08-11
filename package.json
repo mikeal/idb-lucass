@@ -18,10 +18,8 @@
   "author": "Mikeal Rogers <mikeal.rogers@gmail.com> (http://www.mikealrogers.com)",
   "license": "Apache-2.0",
   "dependencies": {
-    "bl": "^1.2.1",
-    "hashes-stream": "^1.1.0",
-    "idb-kv-store": "^4.3.1",
-    "through2": "^2.0.3"
+    "idb": "^2.0.3",
+    "multihasher": "^1.0.0"
   },
   "devDependencies": {
     "codecov": "^2.2.0",
@@ -29,11 +27,11 @@
     "cz-conventional-changelog": "^2.0.0",
     "fake-indexeddb": "^2.0.3",
     "husky": "^0.14.3",
-    "lucass": "^3.0.0",
+    "lucass": "^4.1.0",
+    "semantic-release": "^6.3.6",
     "standard": "^10.0.2",
     "tap": "^10.7.0",
-    "validate-commit-msg": "^2.13.1",
-    "semantic-release": "^6.3.6"
+    "validate-commit-msg": "^2.13.1"
   },
   "repository": {
     "type": "git",
