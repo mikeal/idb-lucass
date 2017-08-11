@@ -15,7 +15,10 @@ class IDBLucass {
   }
   async get (hash) {
     let db = await this.dbPromise
-    return db.transaction('keyval').objectStore('keyval').get(hash)
+    let tx = db.transaction('keyval')
+    let value = await tx.objectStore('keyval').get(hash)
+    if (typeof value === 'undefined') throw new Error('Not found.')
+    return value
   }
   async set (value, ...args) {
     if (!Buffer.isBuffer(value)) throw new Error('Invalid type.')
