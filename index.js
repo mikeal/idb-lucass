@@ -1,5 +1,6 @@
 const idb = require('idb')
 const multihasher = require('multihasher')
+const toBuffer = require('typedarray-to-buffer')
 
 class IDBLucass {
   constructor (name, hasher = multihasher('sha256')) {
@@ -18,6 +19,9 @@ class IDBLucass {
     let tx = db.transaction('keyval')
     let value = await tx.objectStore('keyval').get(hash)
     if (typeof value === 'undefined') throw new Error('Not found.')
+    /* can't test this without a browser :( */
+    /* istanbul ignore if */
+    if (!Buffer.isBuffer(value)) value = toBuffer(value)
     return value
   }
   async set (value, ...args) {

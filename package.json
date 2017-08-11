@@ -19,7 +19,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "idb": "^2.0.3",
-    "multihasher": "^1.0.0"
+    "multihasher": "^1.0.0",
+    "typedarray-to-buffer": "^3.1.2"
   },
   "devDependencies": {
     "codecov": "^2.2.0",
